@@ -7,20 +7,12 @@ body{background:#fdfcf5;color:#2c2c2c;direction:rtl}
 .header nav{display:flex;gap:18px}
 .nav-link{color:white;text-decoration:none;padding:8px 14px;border-radius:20px;transition:.3s}
 .nav-link:hover,.nav-link.active{background:#f4b400;color:#1a4d2e}
-.hero{background:linear-gradient(rgba(0,0,0,.5),rgba(0,0,0,.5)),url('olive_green_whole.png');background-size:cover;background-position:center;height:70vh;display:flex;align-items:center;justify-content:center;text-align:center;color:white}
-.hero h1{font-size:52px;margin-bottom:15px}
 .btn{background:#f4b400;color:#1a4d2e;padding:14px 28px;border:none;border-radius:30px;font-weight:bold;font-size:18px;cursor:pointer;text-decoration:none;display:inline-block;margin:8px}
+.btn-whats{background:#25D366;color:white}
 .section{padding:60px 5%}
-.products{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:22px}
-.card{background:white;border-radius:18px;overflow:hidden;box-shadow:0 6px 20px rgba(0,0,0,.08);transition:.3s}
-.card:hover{transform:translateY(-6px)}
-.card img{width:100%;height:200px;object-fit:cover}
-.card-body{padding:18px}
-.card h3{margin-bottom:8px;color:#1a4d2e}
-.price{color:#e67e22;font-weight:bold;font-size:20px}
 .footer{background:#1a4d2e;color:white;text-align:center;padding:30px;margin-top:40px}
-.contact-form{max-width:600px;margin:auto;background:white;padding:28px;border-radius:18px;box-shadow:0 6px 20px rgba(0,0,0,.08)}
-.contact-form input,.contact-form textarea{width:100%;padding:12px;margin:10px 0;border:1px solid #ddd;border-radius:10px}
+.form-box{max-width:600px;margin:20px auto;background:white;padding:20px;border-radius:15px;box-shadow:0 4px 15px rgba(0,0,0,.08)}
+.form-box input{width:100%;padding:12px;margin:8px 0;border:1px solid #ddd;border-radius:10px}
 </style>
 </head><body>
 
@@ -34,17 +26,82 @@ body{background:#fdfcf5;color:#2c2c2c;direction:rtl}
   </nav>
 </header>
 
-<div class="section"><h1 style="text-align:center">سلة المشتريات</h1><div id="cart-items" style="max-width:700px;margin:20px auto"></div><div style="text-align:center"><button class="btn" onclick="if(CART.length){alert('تم إرسال الطلب! الإجمالي: '+CART.reduce((s,i)=>s+i.price,0)+' جنيه');localStorage.clear();location.reload()}else{alert('السلة فاضية')}">إتمام الطلب واتساب</button> <a href="products.html" class="btn" style="background:#ddd">كمل تسوق</a></div></div>
-<div class="footer">© 2026 الفواخر</div>
+<div class="section">
+<h1 style="text-align:center;color:#1a4d2e">سلة المشتريات</h1>
+<div id="cart-items" style="max-width:700px;margin:20px auto"></div>
+
+<div class="form-box" id="order-form" style="display:none">
+<h3 style="text-align:center;margin-bottom:15px;color:#1a4d2e">بيانات التوصيل</h3>
+<input id="cust-name" placeholder="اسمك بالكامل *">
+<input id="cust-phone" placeholder="رقم موبايلك *">
+<input id="cust-address" placeholder="عنوانك بالتفصيل *">
+</div>
+
+<div style="text-align:center;margin-top:20px">
+<button class="btn btn-whats" id="whatsapp-btn" onclick="sendToWhatsApp()">📲 إتمام الطلب واتساب</button>
+<a href="products.html" class="btn" style="background:#ddd">كمل تسوق</a>
+</div>
+</div>
+
+<div class="footer">© 2026 الفواخر - 01009379373</div>
+
 <script>
+const WHATSAPP_NUMBER = "201009379373";
 let CART = JSON.parse(localStorage.getItem('olive_cart')||'[]');
+
 function render(){
   let div=document.getElementById('cart-items');
-  if(!CART.length){div.innerHTML='<p style=text-align:center>السلة فاضية</p>';return}
+  let form=document.getElementById('order-form');
+  if(!CART.length){
+    div.innerHTML='<p style=text-align:center>السلة فاضية 🛒<br><br><a href=products.html class=btn>شوف المنتجات</a></p>';
+    form.style.display='none';
+    return
+  }
+  form.style.display='block';
   let total=0;
-  div.innerHTML=CART.map((it,i)=>{total+=it.price;return `<div style="display:flex;justify-content:space-between;background:white;padding:12px;margin:8px 0;border-radius:10px"><span>${i+1}. ${it.name}</span><span>${it.price} جنيه <button onclick="CART.splice(${i},1);localStorage.setItem('olive_cart',JSON.stringify(CART));render()" style="margin-right:10px">❌</button></span></div>`}).join('')+`<h3 style="text-align:center;margin-top:15px">الإجمالي: ${total} جنيه</h3>`;
+  div.innerHTML=CART.map((it,i)=>{
+    total+=it.price;
+    return `<div style="display:flex;justify-content:space-between;background:white;padding:12px;margin:8px 0;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.05)"><span>${i+1}. ${it.name}</span><span>${it.price} جنيه <button onclick="removeItem(${i})" style="margin-right:10px;border:none;background:none;cursor:pointer">❌</button></span></div>`
+  }).join('')+`<h3 style="text-align:center;margin-top:15px">الإجمالي: ${total} جنيه</h3>`;
   document.getElementById('cart-count').textContent=CART.length;
 }
+
+function removeItem(i){
+  CART.splice(i,1);
+  localStorage.setItem('olive_cart',JSON.stringify(CART));
+  render();
+}
+
+function sendToWhatsApp(){
+  if(!CART.length){alert('السلة فاضية');return}
+  let name=document.getElementById('cust-name').value.trim();
+  let phone=document.getElementById('cust-phone').value.trim();
+  let address=document.getElementById('cust-address').value.trim();
+  
+  if(!name || !phone || !address){
+    alert('من فضلك املى بيانات التوصيل (الاسم - الموبايل - العنوان)');
+    return;
+  }
+
+  let total=0;
+  let itemsText = CART.map((it,i)=>{
+    total+=it.price;
+    return `${i+1}. ${it.name} - ${it.price} جنيه`;
+  }).join('\n');
+
+  let message = `🫒 *طلب جديد من متجر الفواخر* 🫒\n\n`+
+  `📦 *المنتجات:*\n${itemsText}\n\n`+
+  `💰 *الإجمالي: ${total} جنيه*\n\n`+
+  `👤 *بيانات العميل:*\n`+
+  `الاسم: ${name}\n`+
+  `الموبايل: ${phone}\n`+
+  `العنوان: ${address}\n\n`+
+  `أرجو تأكيد الطلب والتواصل معي`;
+
+  let url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+  window.open(url, '_blank');
+}
+
 render();
 </script>
 </body></html>
